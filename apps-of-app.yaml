@@ -9,7 +9,7 @@ spec:
   source:
     path: Applications
     repoURL: 'git@github.com:Kibria7533/argo-deployments.git'
-    targetRevision: HEAD
+    targetRevision: main
   project: default
   syncPolicy:
      automated:
