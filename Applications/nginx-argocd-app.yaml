@@ -7,6 +7,8 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: app-of-apps
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
   project: default
   source:
     repoURL: git@github.com:Kibria7533/argo-deployments.git
@@ -21,3 +23,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
