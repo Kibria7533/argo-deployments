@@ -9,7 +9,7 @@ spec:
     namespace: nginx-ingress
   project: default
   source:
-    repoURL: https://github.com/your-org/your-repo.git
+    repoURL: git@github.com:Kibria7533/argo-deployments.git
     targetRevision: HEAD
     path: nginx
     helm:
