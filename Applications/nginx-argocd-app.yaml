@@ -7,6 +7,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: app-of-apps
+    name: default
   project: default
   source:
     repoURL: git@github.com:Kibria7533/argo-deployments.git
