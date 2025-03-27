@@ -5,7 +5,7 @@ metadata:
 spec:
   destination:
     name: default
-    namespace: apps-of-app
+    namespace: app-of-apps
   source:
     path: Applications
     repoURL: 'git@github.com:Kibria7533/argo-deployments.git'
