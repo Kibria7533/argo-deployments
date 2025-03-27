@@ -42,7 +42,11 @@ argo-deployments/
 
 ## ✅ Step-by-step Setup
 
-### 1. Root Application (`app-of-apps.yaml`)
+### 1.Add repo to argocd & Root Application (`app-of-apps.yaml`)
+
+# Go to your argo ui and the repo
+
+then 
 
 This Application watches the `Applications/` folder and auto-syncs any `Application` manifests it finds.
 
