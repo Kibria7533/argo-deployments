@@ -44,7 +44,7 @@ argo-deployments/
 
 ### 1.Add repo to argocd & Root Application (`app-of-apps.yaml`)
 
-# Go to your argo ui and the repo
+# Go to your argo ui and add the repo
 
 then 
 
