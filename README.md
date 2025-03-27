@@ -1,3 +1,23 @@
+# Install helm
+```sh
+curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+sudo apt-get install apt-transport-https --yes
+echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+```
+# Install Argocd (Node you have to make its type NodePort form kubernetes dashbord service)
+```sh
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+# Get argocd secret and you know default username is admin
+
+```sh
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+
 # ArgoCD App of Apps Setup for nginx-ingress
 
 This repository uses the **App of Apps** pattern in ArgoCD to manage Helm chart deployments. It includes a parent `Application` resource that deploys other child applications like `nginx-ingress`.
