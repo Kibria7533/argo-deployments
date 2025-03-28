@@ -17,6 +17,12 @@ This GitHub Actions workflow performs the following tasks:
 - Creates an **Ingress** with SSL to expose the ArgoCD dashboard
 - Uses a DNS name from an environment variable (`ARGO_DOMAIN`)
 
+and on env (deploy-argocd) update those values
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: your-cluster-name
+
 ---
 
 ## 🔐 Required GitHub Secrets
