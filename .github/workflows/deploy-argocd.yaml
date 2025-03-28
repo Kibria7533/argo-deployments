@@ -1,14 +1,18 @@
-name: Access EKS and Install ArgoCD
+name: EKS Bootstrap with ArgoCD
 
 on:
-  workflow_dispatch: push
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: your-cluster-name
 
 jobs:
-  install-argocd:
+  bootstrap:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
@@ -16,25 +20,35 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         with:
-          version: 'latest'
+          version: latest
 
-      - name: Update kubeconfig for EKS
+      - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name <your-cluster-name> --region us-east-1
+          aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+
+      - name: Install Cert-Manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+          kubectl rollout status deployment/cert-manager -n cert-manager --timeout=2m
+
+      - name: Install NGINX Ingress Controller
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+          kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=2m
 
       - name: Check if ArgoCD is already installed
         id: check-argocd
         run: |
           if kubectl get namespace argocd > /dev/null 2>&1; then
-            echo "ArgoCD is already installed"
+            echo "ArgoCD already installed"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "ArgoCD not found"
+            echo "ArgoCD not installed"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
@@ -43,3 +57,54 @@ jobs:
         run: |
           kubectl create namespace argocd
           kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+          kubectl rollout status deployment/argocd-server -n argocd --timeout=2m
+
+      - name: Create ArgoCD Ingress with SSL
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: argocd-server
+            namespace: argocd
+            annotations:
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          spec:
+            ingressClassName: nginx
+            tls:
+              - hosts:
+                  - ${{ secrets.ARGO_DOMAIN }}
+                secretName: argocd-tls
+            rules:
+              - host: ${{ secrets.ARGO_DOMAIN }}
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: argocd-server
+                          port:
+                            number: 443
+          EOF
+
+      - name: Create ClusterIssuer for Cert-Manager
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt-prod
+          spec:
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              email: your-email@example.com
+              privateKeySecretRef:
+                name: letsencrypt-prod
+              solvers:
+                - http01:
+                    ingress:
+                      class: nginx
+          EOF
