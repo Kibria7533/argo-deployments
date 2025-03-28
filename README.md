@@ -6,7 +6,7 @@ echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt
 sudo apt-get update
 sudo apt-get install helm
 ```
-# 🚀 GitHub Actions: Full EKS Bootstrap with ArgoCD, Ingress, and Cert-Manager
+#  GitHub Actions: Full EKS Bootstrap with ArgoCD, Ingress, and Cert-Manager
 
 This GitHub Actions workflow performs the following tasks:
 
