@@ -1,0 +1,45 @@
+name: Access EKS and Install ArgoCD
+
+on:
+  workflow_dispatch: push
+
+jobs:
+  install-argocd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --name <your-cluster-name> --region us-east-1
+
+      - name: Check if ArgoCD is already installed
+        id: check-argocd
+        run: |
+          if kubectl get namespace argocd > /dev/null 2>&1; then
+            echo "ArgoCD is already installed"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "ArgoCD not found"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install ArgoCD
+        if: steps.check-argocd.outputs.exists == 'false'
+        run: |
+          kubectl create namespace argocd
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
